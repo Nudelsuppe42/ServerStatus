@@ -1,6 +1,6 @@
-# Awesome Project Build with TypeORM
+# ServerStatus Backend API
 
-Steps to run this project:
+Steps to start the API:
 
 1. Run `npm i` command
 2. Setup database settings inside `ormconfig.json` file

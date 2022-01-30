@@ -1,6 +1,7 @@
 import "reflect-metadata";
 
 import { Incident } from "./entity/Incident";
+import { Service } from "./entity/Service";
 import { User } from "./entity/User";
 import { createConnection } from "typeorm";
 import helmet from "helmet";
@@ -12,17 +13,12 @@ const version = "v1";
 export var connection = null;
 app.use(express.json());
 app.use(helmet());
-app.use('/', async (req, res) => {
-
-    res.send(true)
-})
 
 app.get("/api/" + version + "/users", async (req, res) => {
 
     const users = connection.getRepository(User);
     res.send(await users.find() || { error: "No users found" })
 });
-
 app.get("/api/" + version + "/users/:id", async (req, res) => {
 
     const users = connection.getRepository(User);
@@ -45,6 +41,60 @@ app.post("/api/" + version + "/users/add", async (req, res) => {
         .then(user => {
             res.redirect("/api/" + version + "/users/" + user.id);
         });
+});
+
+
+app.get("/api/" + version + "/services", async (req, res) => {
+
+    const services = connection.getRepository(Service);
+    res.send(await services.find() || { error: "No services found" })
+});
+app.get("/api/" + version + "/services/:id", async (req, res) => {
+
+    const services = connection.getRepository(Service);
+    res.send((await services.find({ id: req.params.id }))[0] || { error: "No services found" })
+});
+app.get("/api/" + version + "/services/status/:status", async (req, res) => {
+
+    const services = connection.getRepository(Service);
+    res.send((await services.find({ status: req.params.status })) || { error: "No services found" })
+});
+app.get("/api/" + version + "/services/creator/:creator", async (req, res) => {
+
+    const services = connection.getRepository(Service);
+    res.send((await services.find({ creator: req.params.creator })) || { error: "No services found" })
+});
+app.post("/api/" + version + "/services/remove/:id", async (req, res) => {
+    const services = connection.getRepository(Service);
+    await services.remove(await services.find({ id: req.params.id }));
+    res.redirect("/api/" + version + "/services");
+});
+app.post("/api/" + version + "/services/add", async (req, res) => {
+    const services = connection.getRepository(Service);
+    let service = new Service();
+    service.name = req.body.name;
+    service.creator = req.body.creator;
+    service.status = req.body.status;
+    service.description = req.body.description;
+
+
+    await connection.manager
+        .save(service)
+        .then(service => {
+            res.redirect("/api/" + version + "/services/" + service.id);
+        });
+});
+app.post("/api/" + version + "/services/update/:id", async (req, res) => {
+    const services = connection.getRepository(Service);
+    let service = await services.findOne(req.params.id);
+    service.name = req.body.name ? req.body.name : service.name;
+    service.creator = req.body.creator ? req.body.creator : service.name;
+    service.status = req.body.status ? req.body.status : service.status;
+    service.description = req.body.description ? req.body.description : service.description;
+
+    await connection.manager
+        .save(service);
+    res.redirect("/api/" + version + "/services/" + service.id);
 });
 
 
@@ -110,6 +160,7 @@ app.post("/api/" + version + "/incidents/update/:id", async (req, res) => {
         .save(incident);
     res.redirect("/api/" + version + "/incidents/" + incident.id);
 });
+
 
 
 

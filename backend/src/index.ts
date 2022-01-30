@@ -3,6 +3,7 @@ import "reflect-metadata";
 import { Incident } from "./entity/Incident";
 import { Service } from "./entity/Service";
 import { User } from "./entity/User";
+import config from "./../config.json";
 import { createConnection } from "typeorm";
 import helmet from "helmet";
 
@@ -161,6 +162,10 @@ app.post("/api/" + version + "/incidents/update/:id", async (req, res) => {
     res.redirect("/api/" + version + "/incidents/" + incident.id);
 });
 
+app.get("/api/" + version + "/status/:type", (req,res) => {
+    res.send( req.params.type.includes("s")? config.status.service:config.status.incident)
+})
+
 
 
 
@@ -185,3 +190,8 @@ function getLocalIPAddress() {
     }
     return '0.0.0.0';
 }
+function verifyStatus(status: String,incident: boolean) {
+    const allowedStatus = incident? config.status.incident:config.status.service;
+    return allowedStatus;
+}
+

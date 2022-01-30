@@ -1,0 +1,6 @@
+{
+    "status":{
+        "service": ["Operational","Maintanace"],
+        "incident": ["Resolved","Identified"]
+    }
+}

@@ -2,8 +2,10 @@ import "reflect-metadata";
 
 import { Incident } from "./entity/Incident";
 import { Service } from "./entity/Service";
+import { Settings } from "./entity/Settings";
 import { User } from "./entity/User";
 import config from "./../config.json";
+import cors from "cors";
 import { createConnection } from "typeorm";
 import helmet from "helmet";
 
@@ -14,6 +16,23 @@ const version = "v1";
 export var connection = null;
 app.use(express.json());
 app.use(helmet());
+app.use(cors())
+
+app.get("/api/", async (req, res) => {
+    const services = connection.getRepository(Service); 
+    const incidents = connection.getRepository(Incident);
+    const settings = connection.getRepository(Settings);
+
+    res.send({
+        "version": version,
+        "services": await services.find(),
+        "incidents": await incidents.find(),
+        "settings": await settings.find(),
+        "status": (await settings.find({ key: "systemStatus" }))[0].value,
+        
+
+    })
+});
 
 app.get("/api/" + version + "/users", async (req, res) => {
 
@@ -162,8 +181,12 @@ app.post("/api/" + version + "/incidents/update/:id", async (req, res) => {
     res.redirect("/api/" + version + "/incidents/" + incident.id);
 });
 
-app.get("/api/" + version + "/status/:type", (req,res) => {
-    res.send( req.params.type.includes("s")? config.status.service:config.status.incident)
+app.get("/api/" + version + "/status/:type", (req, res) => {
+    res.send(req.params.type.includes("s") ? config.status.service : config.status.incident)
+})
+
+app.get("/api/" + version + "/logo", (req, res) => {
+    res.sendFile(__dirname + "/config/logo.png");
 })
 
 
@@ -190,8 +213,8 @@ function getLocalIPAddress() {
     }
     return '0.0.0.0';
 }
-function verifyStatus(status: String,incident: boolean) {
-    const allowedStatus = incident? config.status.incident:config.status.service;
-    return allowedStatus;
+function verifyStatus(status: string, incident: boolean) {
+    const allowedStatus = incident ? config.status.incident : config.status.service;
+    return allowedStatus.includes(status.toLocaleUpperCase())? status : false;
 }
 
